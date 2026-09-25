@@ -48,6 +48,16 @@ Every 10 minutes it evaluates and writes `runs/sk-base/last`; `best` follows the
 
 Stop with Ctrl-C (it checkpoints first) and continue with `--resume runs/sk-base/last`.
 
+## Fine-tune
+
+Start from a published model instead of the raw encoder, e.g. on hand-labelled data:
+
+```bash
+uv run accelerate launch --mixed_precision bf16 -m grafon.train --language configs/sk.yaml --output runs/sk-ft --init grafon-g2p/sk
+```
+
+`--init` takes a Hub repo or a checkpoint directory. It loads the weights only: the optimizer, schedule and step count start fresh, and sizes and backbone come from the model. The language YAML must have the same inventory the model was trained on.
+
 ## Live access
 
 The trainer listens for [pyinject](https://github.com/thewh1teagle/pyinject), so a running job can be inspected without stopping it:

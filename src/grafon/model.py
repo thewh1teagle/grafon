@@ -13,6 +13,15 @@ from transformers import AutoConfig, AutoModel
 from .data import BOS, EOS, IGNORE, PAD, Language
 
 
+def locate(name_or_path, revision=None):
+    """A local checkpoint directory, or a Hub repo made by scripts/export.py (downloaded once, then cached)."""
+    path = Path(name_or_path)
+    if path.is_dir():
+        return path
+    from huggingface_hub import snapshot_download
+    return Path(snapshot_download(str(name_or_path), revision=revision))
+
+
 def repair_rotary_buffers(encoder):
     """transformers 5 builds remote models on the meta device and leaves non-persistent
     buffers computed in __init__ (NeoBERT's rotary cos/sin tables) as zeros; recompute them."""

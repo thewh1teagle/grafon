@@ -1,17 +1,22 @@
 """Inference: text → phonemes; everything outside the grapheme inventory passes through.
 
-uv run grafon runs/he-base/best "שלום עולם"      # or lines on stdin
+uv run grafon grafon-g2p/he "שלום עולם"   # a Hub repo or a local checkpoint; lines on stdin
 """
 from __future__ import annotations
 
 import argparse
 import sys
-from pathlib import Path
 
 import torch
 
 
 class Phonemizer:
+    @classmethod
+    def from_pretrained(cls, name_or_path, revision=None, **kwargs):
+        """A local checkpoint directory, or a Hub repo made by scripts/export.py (downloaded once, then cached)."""
+        from .model import locate
+        return cls(locate(name_or_path, revision), **kwargs)
+
     def __init__(self, checkpoint, device=None, beam=1):
         from transformers import AutoTokenizer
         from .data import Collate
@@ -40,12 +45,12 @@ class Phonemizer:
 
 def main():
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    p.add_argument("checkpoint", type=Path)
+    p.add_argument("model", help="Hub repo (e.g. grafon-g2p/sk) or local checkpoint directory")
     p.add_argument("text", nargs="*", help="Text to phonemize; stdin lines when omitted")
     p.add_argument("--beam", type=int, default=1)
     p.add_argument("--device")
     args = p.parse_args()
-    phonemize = Phonemizer(args.checkpoint, args.device, args.beam)
+    phonemize = Phonemizer.from_pretrained(args.model, device=args.device, beam=args.beam)
     lines = [" ".join(args.text)] if args.text else [line.rstrip("\n") for line in sys.stdin]
     for start in range(0, len(lines), 64):
         for line in phonemize(lines[start:start + 64]):

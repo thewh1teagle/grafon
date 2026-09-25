@@ -25,7 +25,7 @@ from tqdm.auto import tqdm
 from transformers import AutoTokenizer
 
 from .data import TSV, Batches, Collate, Config, assemble
-from .model import G2P
+from .model import G2P, locate
 
 TENSORS = ("input_ids", "attention_mask", "char_ids", "char_to_token", "within", "word_chars",
            "supervised", "decoder_input", "labels")
@@ -36,6 +36,8 @@ def arguments():
     p.add_argument("--language", default="configs/he.yaml", help="Inventories, backbone, train and eval TSVs")
     p.add_argument("--output", required=True, help="Run directory, e.g. runs/he-base")
     p.add_argument("--resume", help="Checkpoint directory, e.g. runs/he-base/last")
+    p.add_argument("--init", help="Start from a trained model's weights (Hub repo or checkpoint), fresh optimizer; "
+                                  "sizes and backbone come from it")
     p.add_argument("--epochs", type=int, default=3)
     p.add_argument("--batch-bytes", type=int, default=24000, help="Padded row bytes per GPU pass")
     p.add_argument("--lr", type=float, default=3e-5, help="Encoder learning rate")
@@ -57,6 +59,8 @@ def arguments():
     p.add_argument("--mixed-precision", choices=("no", "fp16", "bf16"), default="bf16")
     p.add_argument("--seed", type=int, default=42)
     args = p.parse_args()
+    if args.resume and args.init:
+        p.error("--resume continues a run; --init starts a new one from trained weights; pick one")
     try:
         args.config = Config.load(args.language)
     except ValueError as error:
@@ -128,16 +132,22 @@ def main():
         pyinject.listen()
     os.environ.setdefault("TOKENIZERS_PARALLELISM", "false")
 
+    source = args.resume or (locate(args.init) if args.init else None)
     if args.resume:
         model = G2P.from_checkpoint(args.resume)
         state = json.loads(Path(args.resume, "trainer.json").read_text())
+    elif args.init:
+        model = G2P.from_checkpoint(source)
+        if model.language != args.config.language:
+            raise SystemExit(f"--init {args.init} was trained on another inventory than {args.language}")
+        state = dict(step=0, epoch=0, batch=0, best=None)
     else:
         model = G2P(args.config.language, backbone=args.config.backbone, width=args.width, layers=args.layers,
                     heads=args.heads, decoder_layers=args.decoder_layers, dropout=args.dropout,
                     max_chars=args.max_chars, max_tokens=args.max_tokens)
         state = dict(step=0, epoch=0, batch=0, best=None)
     settings = model.settings
-    tokenizer = None if settings["backbone"] in (None, "none") else AutoTokenizer.from_pretrained(args.resume or settings["backbone"], trust_remote_code=True)
+    tokenizer = None if settings["backbone"] in (None, "none") else AutoTokenizer.from_pretrained(source or settings["backbone"], trust_remote_code=True)
     collate = Collate(model.language, tokenizer, max_chars=settings["max_chars"], max_tokens=settings["max_tokens"],
                       max_word_chars=settings["max_word_chars"], max_phonemes=settings["max_phonemes"])
 

@@ -175,6 +175,7 @@ version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "accelerate" },
+    { name = "huggingface-hub" },
     { name = "jiwer" },
     { name = "numpy" },
     { name = "pyinject" },
@@ -190,6 +191,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "accelerate", specifier = ">=1.14.0" },
+    { name = "huggingface-hub", specifier = ">=1.33.0" },
     { name = "jiwer", specifier = ">=4.0.0" },
     { name = "numpy", specifier = ">=2.5.3" },
     { name = "pyinject", git = "https://github.com/thewh1teagle/pyinject" },

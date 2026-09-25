@@ -9,6 +9,7 @@ authors = [
 requires-python = ">=3.13"
 dependencies = [
     "accelerate>=1.14.0",
+    "huggingface-hub>=1.33.0",
     "jiwer>=4.0.0",
     "numpy>=2.5.3",
     "pyinject>=0.1.0",

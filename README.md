@@ -38,6 +38,7 @@ A language is one YAML file and the data is plain `text<TAB>phonemes`; see [Trai
 |---|---|---|---|
 | Hebrew | `dicta-il/neodictabert` | 6.0M sentences | 90.5% word accuracy |
 | Slovak | `gerulata/slovakbert` | 9.5M sentences | training |
+| Arabic | `UBC-NLP/MARBERTv2` | 1.0M sentences | training |
 
 ## Docs
 

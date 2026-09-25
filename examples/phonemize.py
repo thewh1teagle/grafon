@@ -7,6 +7,7 @@ from grafon import Phonemizer
 MODELS = {
     "grafon-g2p/sk": ["Ahoj svet, čo si myslíš o modeli?", "Idem s mamou k otcovi v Prahe."],
     "grafon-g2p/he": ["אחרי שאתה אורז את המזוודה, תבוא לאכול אורז"],
+    "grafon-g2p/ar": ["مرحبا بالعالم، ما رأيك في النموذج؟ يبدو أنه يعمل؟"],
 }
 
 for repo, sentences in MODELS.items():

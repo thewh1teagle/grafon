@@ -1,0 +1,4 @@
+# Hebrew: letters plus geresh/gershayim (Hebrew and ASCII forms); niqqud is stripped.
+graphemes: אבגדהוזחטיכךלמםנןסעפףצץקרשת׳״'"
+phonemes: abdefhijklmnopstuvwzɡʁʃʒʔˈχ
+strip: '\p{M}'

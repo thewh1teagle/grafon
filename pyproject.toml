@@ -1,0 +1,32 @@
+[project]
+name = "anyg2p"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "thewh1teagle", email = "61390950+thewh1teagle@users.noreply.github.com" }
+]
+requires-python = ">=3.13"
+dependencies = [
+    "accelerate>=1.14.0",
+    "jiwer>=4.0.0",
+    "numpy>=2.5.3",
+    "pyinject>=0.1.0",
+    "pyyaml>=6.0.3",
+    "regex>=2026.9.3",
+    "safetensors>=0.8.0",
+    "tensorboard>=2.21.0",
+    "torch>=2.14.0",
+    "tqdm>=4.70.0",
+    "transformers>=5.16.1",
+]
+
+[project.scripts]
+anyg2p = "anyg2p:main"
+
+[build-system]
+requires = ["uv_build>=0.12.9,<0.13.0"]
+build-backend = "uv_build"
+
+[tool.uv.sources]
+pyinject = { git = "https://github.com/thewh1teagle/pyinject" }

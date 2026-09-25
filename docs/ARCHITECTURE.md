@@ -21,7 +21,7 @@ normalizers: [strip_marks]
 
 - A word is a maximal run of graphemes. Everything else (digits, Latin, punctuation) passes through untouched but still reaches the encoder as context.
 - Character ids: pad, other, space, then the graphemes. Phoneme ids: pad, bos, eos, then the phonemes. Stress (`ˈ`) is an ordinary phoneme.
-- Normalizers run in order between NFC passes: `strip_marks` (NFD → remove `\p{M}` → NFC, so precomposed forms lose their marks too) and `lowercase`. Their output is what the encoder, the character stack and the passthrough all see. Checkpoints with the older `strip: '\p{M}'` load as `[strip_marks]`.
+- Normalizers run in order between NFC passes: `nfkc` (folds presentation forms and ligatures), `strip_marks` (removes the combining marks left after NFC, such as niqqud and harakat; precomposed letters like أ keep theirs) and `lowercase`. Their output is what the encoder, the character stack and the passthrough all see. Checkpoints with the older `strip: '\p{M}'` load as `[strip_marks]`.
 - The inventory is saved in each checkpoint's `config.json`; the YAML is read only when a run starts.
 - The YAML also sets the run's `backbone`, `train` and `eval`, so a run is `--language configs/sk.yaml --output runs/sk-base`. They are not part of the `Language`.
 

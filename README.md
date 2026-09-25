@@ -43,4 +43,5 @@ A language is one YAML file and the data is plain `text<TAB>phonemes`; see [Trai
 
 - [Training](docs/TRAIN.md): language configs, data format, running and resuming
 - [Architecture](docs/ARCHITECTURE.md): the model, the data format, decoding
+- [Evaluation](docs/EVAL.md): MILIM-Bench for Hebrew, neurlang multi_eval for Slovak, Arabic Speech Corpus for Arabic
 - [Project rules](docs/PROJECT.md): how training runs and model sizes are managed

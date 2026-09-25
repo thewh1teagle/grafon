@@ -26,7 +26,9 @@ BOS, EOS = 1, 2  # phoneme ids; 0 is padding, phonemes follow
 MARKS = re.compile(r"\p{M}")
 # Applied in order between NFC passes; the result is what the encoder, the character stack and the output see.
 NORMALIZERS = {
-    "strip_marks": lambda text: unicodedata.normalize("NFC", MARKS.sub("", unicodedata.normalize("NFD", text))),
+    "nfkc": lambda text: unicodedata.normalize("NFKC", text),  # folds presentation forms and ligatures (ﻻ → لا)
+    # Combining marks left after NFC (niqqud, harakat); precomposed letters (أ, é) keep theirs.
+    "strip_marks": lambda text: MARKS.sub("", text),
     "lowercase": str.lower,
 }
 

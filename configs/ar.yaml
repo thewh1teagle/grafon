@@ -1,0 +1,13 @@
+# Arabic (MSA): the 36 letters with hamza forms, ta marbuta and alef maqsura, plus پ چ ڤ گ for loanwords.
+# Tashkeel is stripped from the input; the model restores vowels from context.
+# Tatweel (ـ, a letter-like stretch) is a grapheme so it never splits a word; it carries no sound.
+graphemes: ءآأؤإئابةتثجحخدذرزسشصضطظعغفقكلمنهوىيپچڤگـ
+normalizers: [nfkc, strip_marks]
+# Measured: exactly the symbols plans/ar_label/ar_rules.py emits (data/ar/train.tsv, 2026-09-25).
+# ˤ marks emphatics (sˤ dˤ tˤ ðˤ); geminates are doubled consonants; ː is vowel length.
+phonemes: abdfhijklmnpqrstuvwxzðħɡɣʃʒʔʕθˈːˤ
+
+# Run: encoder (any model with a fast tokenizer, or 'none' for characters only), train globs, eval TSV.
+backbone: UBC-NLP/MARBERTv2  # MSA + dialect (social media); fits subtitles
+train: data/ar/train.tsv
+eval: data/ar/eval-silver.tsv

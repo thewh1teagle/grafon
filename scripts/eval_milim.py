@@ -14,7 +14,7 @@ from pathlib import Path
 import torch
 from tqdm import tqdm
 
-from anyg2p import Phonemizer
+from grafon import Phonemizer
 
 PHONEMES = set("abdefhijklmnopstuvwzɡʁʃʒʔˈχ")
 

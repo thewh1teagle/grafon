@@ -1,12 +1,13 @@
 """TSV `text<TAB>phonemes` rows → encoder inputs, character ids and per-word phoneme targets.
 
-A language is two inventories. A word is a maximal run of graphemes on the text side and
+A language is two inventories and a list of named normalizers. A word is a maximal run of graphemes on the text side and
 of phonemes on the target side. Rows pair by whitespace token, and within a token by run;
 a token whose run counts differ has no target, and a row whose token counts differ has
 none at all. Unpaired words still reach the encoder and the character stack as context.
 """
 from __future__ import annotations
 
+import glob
 import random
 import unicodedata
 from dataclasses import dataclass
@@ -22,16 +23,29 @@ IGNORE = -100
 PAD, OTHER, SPACE = 0, 1, 2  # character ids; graphemes follow
 BOS, EOS = 1, 2  # phoneme ids; 0 is padding, phonemes follow
 
+MARKS = re.compile(r"\p{M}")
+# Applied in order between NFC passes; the result is what the encoder, the character stack and the output see.
+NORMALIZERS = {
+    "strip_marks": lambda text: unicodedata.normalize("NFC", MARKS.sub("", unicodedata.normalize("NFD", text))),
+    "lowercase": str.lower,
+}
+
 
 @dataclass(frozen=True)
 class Language:
     graphemes: str
     phonemes: str
-    strip: str = ""
+    normalizers: tuple = ()
 
     @classmethod
-    def load(cls, path):
-        return cls(**yaml.safe_load(Path(path).read_text(encoding="utf-8")))
+    def from_dict(cls, settings):
+        settings = dict(settings)
+        strip = settings.pop("strip", None)  # checkpoints before normalizers stored a mark-stripping regex
+        if strip:
+            if strip != r"\p{M}":
+                raise ValueError(f"legacy strip {strip!r} has no normalizer")
+            settings["normalizers"] = ["strip_marks"]
+        return cls(**settings)
 
     def __post_init__(self):
         for name in ("graphemes", "phonemes"):
@@ -40,12 +54,15 @@ class Language:
                 raise ValueError(f"{name} must be distinct, non-whitespace characters")
         object.__setattr__(self, "word_re", re.compile(f"[{re.escape(self.graphemes)}]+"))
         object.__setattr__(self, "phoneme_re", re.compile(f"[{re.escape(self.phonemes)}]+"))
-        object.__setattr__(self, "strip_re", re.compile(self.strip, re.V1) if self.strip else None)
+        object.__setattr__(self, "normalizers", tuple(self.normalizers))
+        unknown = [n for n in self.normalizers if n not in NORMALIZERS]
+        if unknown:
+            raise ValueError(f"unknown normalizers {unknown}; known: {sorted(NORMALIZERS)}")
         object.__setattr__(self, "char_index", {c: i + 3 for i, c in enumerate(self.graphemes)})
         object.__setattr__(self, "phoneme_index", {c: i + 3 for i, c in enumerate(self.phonemes)})
 
     def to_dict(self):
-        return dict(graphemes=self.graphemes, phonemes=self.phonemes, strip=self.strip)
+        return dict(graphemes=self.graphemes, phonemes=self.phonemes, normalizers=list(self.normalizers))
 
     @property
     def char_vocab(self):
@@ -56,9 +73,10 @@ class Language:
         return len(self.phonemes) + 3
 
     def normalize(self, text):
-        if self.strip_re is None:
-            return unicodedata.normalize("NFC", text)
-        return unicodedata.normalize("NFC", self.strip_re.sub("", unicodedata.normalize("NFD", text)))
+        text = unicodedata.normalize("NFC", text)
+        for name in self.normalizers:
+            text = NORMALIZERS[name](text)
+        return unicodedata.normalize("NFC", text)
 
     def char_id(self, char):
         return self.char_index.get(char, SPACE if char.isspace() else OTHER)
@@ -77,10 +95,35 @@ class Language:
         for k, token in enumerate(tokens):
             runs = [(token.start() + a, token.start() + b) for a, b in self.words(token.group())]
             said = self.phoneme_re.findall(refs[k]) if len(tokens) == len(refs) else []
-            paired = len(said) == len(runs)
+            # A letter or mark outside the inventory masks the token; punctuation and digits pass.
+            clean = len(tokens) == len(refs) and not any(
+                unicodedata.category(c)[0] in "LM" and c not in self.phoneme_index for c in refs[k])
+            paired = clean and len(said) == len(runs)
             spans += runs
             targets += [[self.phoneme_index[c] for c in s] for s in said] if paired else [None] * len(runs)
         return spans, targets
+
+
+@dataclass(frozen=True)
+class Config:
+    """A language YAML: the Language plus the run's backbone, training TSVs and eval TSV."""
+    language: Language
+    backbone: str
+    train: tuple
+    eval: str
+
+    @classmethod
+    def load(cls, path):
+        settings = yaml.safe_load(Path(path).read_text(encoding="utf-8"))
+        run = {key: settings.pop(key, None) for key in ("backbone", "train", "eval")}
+        missing = [key for key, value in run.items() if value is None]
+        if missing:
+            raise ValueError(f"{path} must set {', '.join(missing)}")
+        patterns = [run["train"]] if isinstance(run["train"], str) else run["train"]
+        train = tuple(sorted(f for pattern in patterns for f in glob.glob(pattern)))
+        if not train or not Path(run["eval"]).is_file():
+            raise ValueError(f"{path}: training or eval TSV not found")
+        return cls(Language.from_dict(settings), run["backbone"], train, run["eval"])
 
 
 def line_index(path):

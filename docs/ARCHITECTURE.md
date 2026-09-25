@@ -11,18 +11,19 @@ everything outside the grapheme inventory ────────────�
 
 ## Language
 
-A language is two inventories and an optional strip regex, in YAML (`configs/he.yaml`):
+A language is two inventories and a list of named normalizers, in YAML (`configs/he.yaml`, `configs/sk.yaml`):
 
 ```yaml
 graphemes: אבגדהוזחטיכךלמםנןסעפףצץקרשת׳״'"
 phonemes: abdefhijklmnopstuvwzɡʁʃʒʔˈχ
-strip: '\p{M}'
+normalizers: [strip_marks]
 ```
 
 - A word is a maximal run of graphemes. Everything else (digits, Latin, punctuation) passes through untouched but still reaches the encoder as context.
 - Character ids: pad, other, space, then the graphemes. Phoneme ids: pad, bos, eos, then the phonemes. Stress (`ˈ`) is an ordinary phoneme.
-- `strip` runs as NFD → remove → NFC, so precomposed forms lose their marks too.
+- Normalizers run in order between NFC passes: `strip_marks` (NFD → remove `\p{M}` → NFC, so precomposed forms lose their marks too) and `lowercase`. Their output is what the encoder, the character stack and the passthrough all see. Checkpoints with the older `strip: '\p{M}'` load as `[strip_marks]`.
 - The inventory is saved in each checkpoint's `config.json`; the YAML is read only when a run starts.
+- The YAML also sets the run's `backbone`, `train` and `eval`, so a run is `--language configs/sk.yaml --output runs/sk-base`. They are not part of the `Language`.
 
 ## Data
 
@@ -39,7 +40,7 @@ Batches are length-bucketed under a byte budget and seeded by `(seed, epoch)`, s
 
 ## Inference
 
-`Phonemizer(checkpoint)` or `uv run anyg2p <checkpoint> "text"`: normalize → word spans → model → each span replaced by its phonemes, everything else kept as written.
+`Phonemizer(checkpoint)` or `uv run grafon <checkpoint> "text"`: normalize → word spans → model → each span replaced by its phonemes, everything else kept as written.
 
 On aarch64, torch's oneDNN path is slow for the decoder's small matrices; `torch.backends.mkldnn.enabled = False` cut CPU decoding about 3.5×. The encoder dominates latency.
 

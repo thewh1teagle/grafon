@@ -1,6 +1,6 @@
 """Inference: text → phonemes; everything outside the grapheme inventory passes through.
 
-uv run anyg2p runs/he-base/best "שלום עולם"      # or lines on stdin
+uv run grafon runs/he-base/best "שלום עולם"      # or lines on stdin
 """
 from __future__ import annotations
 

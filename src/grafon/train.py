@@ -1,4 +1,4 @@
-"""uv run accelerate launch -m anyg2p.train --output runs/<name>
+"""uv run accelerate launch -m grafon.train --output runs/<name>
 
 Checkpoints: <output>/last on every eval, <output>/best when eval loss improves.
 Stop with Ctrl-C or SIGTERM: the run checkpoints before it exits, and --resume <output>/last
@@ -7,7 +7,6 @@ continues it exactly. TensorBoard logs go to <output>/tensorboard.
 from __future__ import annotations
 
 import argparse
-import glob
 import json
 import math
 import os
@@ -25,7 +24,7 @@ from torch.utils.data import DataLoader
 from tqdm.auto import tqdm
 from transformers import AutoTokenizer
 
-from .data import TSV, Batches, Collate, Language, assemble
+from .data import TSV, Batches, Collate, Config, assemble
 from .model import G2P
 
 TENSORS = ("input_ids", "attention_mask", "char_ids", "char_to_token", "within", "word_chars",
@@ -34,10 +33,7 @@ TENSORS = ("input_ids", "attention_mask", "char_ids", "char_to_token", "within",
 
 def arguments():
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    p.add_argument("--language", default="configs/he.yaml")
-    p.add_argument("--train", nargs="+", default=["data/distil/*.tsv"], help="TSV files or globs")
-    p.add_argument("--eval", default="data/eval.tsv")
-    p.add_argument("--backbone", default="dicta-il/neodictabert", help="Any model with a fast tokenizer; 'none' for characters only")
+    p.add_argument("--language", default="configs/he.yaml", help="Inventories, backbone, train and eval TSVs")
     p.add_argument("--output", required=True, help="Run directory, e.g. runs/he-base")
     p.add_argument("--resume", help="Checkpoint directory, e.g. runs/he-base/last")
     p.add_argument("--epochs", type=int, default=3)
@@ -61,9 +57,10 @@ def arguments():
     p.add_argument("--mixed-precision", choices=("no", "fp16", "bf16"), default="bf16")
     p.add_argument("--seed", type=int, default=42)
     args = p.parse_args()
-    args.train = sorted(f for pattern in args.train for f in glob.glob(pattern))
-    if not args.train or not Path(args.eval).is_file():
-        p.error("training or eval TSV not found")
+    try:
+        args.config = Config.load(args.language)
+    except ValueError as error:
+        p.error(str(error))
     return args
 
 
@@ -135,7 +132,7 @@ def main():
         model = G2P.from_checkpoint(args.resume)
         state = json.loads(Path(args.resume, "trainer.json").read_text())
     else:
-        model = G2P(Language.load(args.language), backbone=args.backbone, width=args.width, layers=args.layers,
+        model = G2P(args.config.language, backbone=args.config.backbone, width=args.width, layers=args.layers,
                     heads=args.heads, decoder_layers=args.decoder_layers, dropout=args.dropout,
                     max_chars=args.max_chars, max_tokens=args.max_tokens)
         state = dict(step=0, epoch=0, batch=0, best=None)
@@ -144,8 +141,8 @@ def main():
     collate = Collate(model.language, tokenizer, max_chars=settings["max_chars"], max_tokens=settings["max_tokens"],
                       max_word_chars=settings["max_word_chars"], max_phonemes=settings["max_phonemes"])
 
-    train = TSV(args.train)
-    evaluation = TSV([args.eval])
+    train = TSV(args.config.train)
+    evaluation = TSV([args.config.eval])
     sampler = Batches(train.lengths(), args.batch_bytes, args.seed, accelerator.process_index, accelerator.num_processes)
     sampler.epoch, sampler.skip = state["epoch"], state["batch"]
     loader = DataLoader(train, batch_sampler=sampler, collate_fn=collate, num_workers=args.workers,

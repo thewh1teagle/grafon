@@ -14,3 +14,6 @@ runs/
 data/
 models/
 plans/
+# Slovak labeller (g2p-sk copy, GPL)
+scripts/*.perl
+scripts/sylseg_sk/

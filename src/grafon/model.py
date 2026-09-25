@@ -43,7 +43,7 @@ class G2P(nn.Module):
                  decoder_layers=2, dropout=0.1, max_chars=1024, max_tokens=512, max_word_chars=64,
                  max_phonemes=64, encoder_config=None):
         super().__init__()
-        self.language = language if isinstance(language, Language) else Language(**language)
+        self.language = language if isinstance(language, Language) else Language.from_dict(language)
         self.encoder = None if backbone in (None, "none") else load_encoder(backbone, encoder_config)
         self.settings = dict(language=self.language.to_dict(), backbone=backbone, width=width, layers=layers, heads=heads,
                              decoder_layers=decoder_layers, dropout=dropout, max_chars=max_chars, max_tokens=max_tokens,

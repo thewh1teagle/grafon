@@ -1,0 +1,10 @@
+# Slovak: lowercased alphabet with diacritics. No strip_marks: the marks are letters.
+graphemes: aáäbcčdďeéfghiíjklĺľmnňoóôpqrŕsštťuúvwxyýzž
+normalizers: [lowercase]
+# Measured: every symbol the g2p-sk labeller (plans/sk_label) emits in data/sk/train.tsv, 2026-09-25.
+phonemes: abcdefijklmnoprstuvxzŋɟɡɣɦɱɲʃʎʒʣʤʦʧˈː̯̩
+
+# Run: encoder (any model with a fast tokenizer, or 'none' for characters only), train globs, eval TSV.
+backbone: gerulata/slovakbert
+train: data/sk/train.tsv
+eval: data/sk/eval-silver.tsv  # silver until the hand-labelled set exists

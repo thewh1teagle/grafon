@@ -1,7 +1,7 @@
 [project]
-name = "anyg2p"
+name = "grafon"
 version = "0.1.0"
-description = "Add your description here"
+description = "Contextual grapheme-to-phoneme for any language, on top of any text encoder."
 readme = "README.md"
 authors = [
     { name = "thewh1teagle", email = "61390950+thewh1teagle@users.noreply.github.com" }
@@ -22,7 +22,7 @@ dependencies = [
 ]
 
 [project.scripts]
-anyg2p = "anyg2p:main"
+grafon = "grafon:main"
 
 [build-system]
 requires = ["uv_build>=0.12.9,<0.13.0"]

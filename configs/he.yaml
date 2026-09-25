@@ -1,4 +1,9 @@
 # Hebrew: letters plus geresh/gershayim (Hebrew and ASCII forms); niqqud is stripped.
 graphemes: אבגדהוזחטיכךלמםנןסעפףצץקרשת׳״'"
 phonemes: abdefhijklmnopstuvwzɡʁʃʒʔˈχ
-strip: '\p{M}'
+normalizers: [strip_marks]
+
+# Run: encoder (any model with a fast tokenizer, or 'none' for characters only), train globs, eval TSV.
+backbone: dicta-il/neodictabert
+train: data/distil/*.tsv
+eval: data/eval.tsv

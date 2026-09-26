@@ -8,6 +8,8 @@ MODELS = {
     "grafon-g2p/sk": ["Ahoj svet, čo si myslíš o modeli?", "Idem s mamou k otcovi v Prahe."],
     "grafon-g2p/he": ["אחרי שאתה אורז את המזוודה, תבוא לאכול אורז"],
     "grafon-g2p/ar": ["مرحبا بالعالم، ما رأيك في النموذج؟ يبدو أنه يعمل؟"],
+    "grafon-g2p/en": ["She will read the book tomorrow; he read it yesterday.",
+                      "I live near the stadium, and the show is live tonight."],
 }
 
 for repo, sentences in MODELS.items():

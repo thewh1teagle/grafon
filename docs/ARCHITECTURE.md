@@ -27,7 +27,7 @@ normalizers: [strip_marks]
 
 ## Data
 
-TSV `text<TAB>phonemes`. Words pair by whitespace token, then by run inside a token (grapheme runs on one side, phoneme runs on the other). A token whose run counts differ has no target; a row whose token counts differ has none at all. Unpaired words still reach the encoder and the character stack; they only contribute no loss.
+TSV `text<TAB>phonemes`. Words pair by whitespace token, then by run inside a token (grapheme runs on one side, phoneme runs on the other). A token whose run counts differ has no target; a row whose token counts differ has none at all. A phoneme token `[MASK]` withholds the target on purpose (a word the labeller cannot vouch for, such as a homograph it would only guess); eval leaves masked words out of every metric. Unpaired and masked words still reach the encoder and the character stack; they only contribute no loss.
 
 Batches are length-bucketed under a byte budget and seeded by `(seed, epoch)`, so a resume skips exactly the consumed batches.
 

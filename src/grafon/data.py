@@ -3,7 +3,8 @@
 A language is two inventories and a list of named normalizers. A word is a maximal run of graphemes on the text side and
 of phonemes on the target side. Rows pair by whitespace token, and within a token by run;
 a token whose run counts differ has no target, and a row whose token counts differ has
-none at all. Unpaired words still reach the encoder and the character stack as context.
+none at all. A phoneme token `[MASK]` deliberately leaves its text token without a target.
+Unpaired and masked words still reach the encoder and the character stack as context.
 """
 from __future__ import annotations
 
@@ -22,6 +23,7 @@ from torch.utils.data import Dataset
 IGNORE = -100
 PAD, OTHER, SPACE = 0, 1, 2  # character ids; graphemes follow
 BOS, EOS = 1, 2  # phoneme ids; 0 is padding, phonemes follow
+MASK = "[MASK]"  # a phoneme token with no target: its text token is context only
 
 MARKS = re.compile(r"\p{M}")
 # Applied in order between NFC passes; the result is what the encoder, the character stack and the output see.
@@ -97,8 +99,8 @@ class Language:
         for k, token in enumerate(tokens):
             runs = [(token.start() + a, token.start() + b) for a, b in self.words(token.group())]
             said = self.phoneme_re.findall(refs[k]) if len(tokens) == len(refs) else []
-            # A letter or mark outside the inventory masks the token; punctuation and digits pass.
-            clean = len(tokens) == len(refs) and not any(
+            # [MASK], or a letter or mark outside the inventory, masks the token; punctuation and digits pass.
+            clean = len(tokens) == len(refs) and refs[k] != MASK and not any(
                 unicodedata.category(c)[0] in "LM" and c not in self.phoneme_index for c in refs[k])
             paired = clean and len(said) == len(runs)
             spans += runs

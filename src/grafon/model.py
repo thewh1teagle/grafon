@@ -1,6 +1,7 @@
 """Any encoder's subwords → contextual character states → a small autoregressive decoder per word."""
 from __future__ import annotations
 
+import inspect
 import json
 import sys
 from pathlib import Path
@@ -9,6 +10,7 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 from transformers import AutoConfig, AutoModel
+from transformers.models.auto.modeling_auto import MODEL_MAPPING
 
 from .data import BOS, EOS, IGNORE, PAD, Language
 
@@ -34,8 +36,9 @@ def repair_rotary_buffers(encoder):
 def load_encoder(backbone, encoder_config=None):
     config = AutoConfig.from_pretrained(backbone, trust_remote_code=True)
     kwargs = dict(attn_implementation="sdpa", trust_remote_code=True)
-    # Remote-code models (NeoBERT) take no pooler flag.
-    if not getattr(config, "auto_map", None):
+    # Only BERT-style models take a pooler flag; remote-code (NeoBERT) and ModernBERT have none.
+    if not getattr(config, "auto_map", None) and \
+            "add_pooling_layer" in inspect.signature(MODEL_MAPPING[type(config)].__init__).parameters:
         kwargs["add_pooling_layer"] = False
     if encoder_config is None:
         encoder = AutoModel.from_pretrained(backbone, **kwargs)

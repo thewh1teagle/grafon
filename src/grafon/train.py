@@ -24,7 +24,7 @@ from torch.utils.data import DataLoader
 from tqdm.auto import tqdm
 from transformers import AutoTokenizer
 
-from .data import TSV, Batches, Collate, Config, assemble
+from .data import MASK, TSV, Batches, Collate, Config, assemble
 from .model import G2P, locate
 
 TENSORS = ("input_ids", "attention_mask", "char_ids", "char_to_token", "within", "word_chars",
@@ -104,11 +104,16 @@ def evaluate(model, loader, device, beam):
         for row, ids in zip(batch["word_rows"], predicted):
             per_row[row].append(language.decode(ids))
         for row, phonemes in zip(batch["rows"], per_row):
-            references.append(" ".join(row["phonemes"].split()))
-            hypotheses.append(" ".join(assemble(row["text"], row["spans"], phonemes).split()))
+            reference, hypothesis = row["phonemes"].split(), assemble(row["text"], row["spans"], phonemes).split()
+            if len(reference) == len(hypothesis):  # masked words are not scored
+                kept = [(r, h) for r, h in zip(reference, hypothesis) if r != MASK]
+                reference, hypothesis = [r for r, _ in kept], [h for _, h in kept]
+            if reference:
+                references.append(" ".join(reference))
+                hypotheses.append(" ".join(hypothesis))
     model.train()
     return {"eval/loss": loss_sum / max(tokens, 1), "eval/word_error": wrong / max(words, 1),
-            "eval/cer": char_errors / max(chars, 1), "eval/wer": jiwer.wer(references, hypotheses),
+            "eval/cer": char_errors / max(chars, 1), "eval/wer": jiwer.wer(references, hypotheses) if references else float("nan"),
             "eval/unpaired_words": unpaired}, list(zip(references, hypotheses))
 
 

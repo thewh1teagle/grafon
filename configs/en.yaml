@@ -1,0 +1,18 @@
+# English (en-US): lowercased letters, plus the accented letters of loanwords and both apostrophes
+# so "don't" and "o'neill" stay one word. No strip_marks: é and ñ are letters.
+# TODO: acronyms that are also words lose their reading to lowercasing: US → ʌs, AM → æm, IT → ɪt.
+# Options: keep A–Z as graphemes and drop `lowercase` (label espeak on cased text so case is consistent),
+# or let the encoder see cased text while only the character stack is lowercased.
+graphemes: abcdefghijklmnopqrstuvwxyzàáâäåçèéêëìíîïñòóôöùúûü'’
+normalizers: [nfkc, lowercase]
+# Measured: every symbol espeak-ng 1.51 -v en-us --ipa emits on /usr/share/dict/american-english (104k words),
+# 2026-09-26, minus foreign-rule strays under 40 uses each (r x ɬ ç ʲ and nasal tilde); tokens with those are masked.
+# ˌ is secondary stress, ː length, ̩ syllabic (bˈʌʔn̩), ᵻ reduced i, ɾ the flap.
+phonemes: abdefhijklmnopstuvwzæðŋɐɑɔəɚɛɜɡɪɹɾʃʊʌʒʔˈˌː̩θᵻ
+
+# Run: encoder (any model with a fast tokenizer, or 'none' for characters only), train globs, eval TSV.
+backbone: jhu-clsp/ettin-encoder-150m  # ModernBERT architecture, 768 wide, MIT
+# Homograph fine-tune (run with --init runs/en-base/last): Google gold ×10 + 300k v2 subtitle rows without
+# homographs. Base run: train: data/en/train.tsv, eval: data/en/eval-silver.tsv
+train: [data/en/finetune/homographs-train-x10.tsv, data/en/finetune/subtitles-v2-300k.tsv]
+eval: data/en/homographs-eval.tsv  # only the homograph is scored: 1 - word_error is homograph accuracy

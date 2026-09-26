@@ -2,11 +2,13 @@
 
 Contextual grapheme-to-phoneme for any language, on top of any text encoder.
 
-A pretrained encoder reads the whole sentence; a small decoder spells out each word's phonemes. Context decides what spelling alone can't: Hebrew vowels, homographs, voicing across word boundaries.
+A pretrained encoder reads the whole sentence; a small decoder spells out each word's phonemes. Context decides what spelling alone can't: Hebrew and Arabic vowels, homographs, voicing across word boundaries.
 
 ```text
 אחרי שאתה אורז את המזוודה, תבוא לאכול אורז  →  ʔaχʁˈej ʃeʔatˈa ʔoʁˈez ʔˈet hamizvadˈa, tavˈo leʔeχˈol ʔˈoʁez
 Idem s mamou k otcovi v Prahe.              →  ˈiɟem z mˈamou̯ ɡ ˈotʦovi f prˈaɦe.
+مرحبا بالعالم، ما رأيك في النموذج؟           →  mˈarħaban bilʕˈaːlam، mˈaː rˈaʔjuka fˈiː nnamˈuːðadʒ؟
+He will read it tomorrow; she read it yesterday.  →  hiː wɪl ɹˈiːd ɪt təmˈɑːɹoʊ; ʃiː ɹˈɛd ɪt jˈɛstɚdˌeɪ.
 ```
 
 ## Use

@@ -49,3 +49,9 @@ A language is one YAML file and the data is plain `text<TAB>phonemes`; see [Trai
 - [Architecture](docs/ARCHITECTURE.md): the model, the data format, decoding
 - [Evaluation](docs/EVAL.md): MILIM-Bench for Hebrew, neurlang multi_eval for Slovak, Arabic Speech Corpus for Arabic
 - [Project rules](docs/PROJECT.md): how training runs and model sizes are managed
+
+### Urdu G2P (proposed contribution)
+
+An experimental compact Urdu grapheme-to-IPA implementation is available under
+[`contrib/urdu`](contrib/urdu/README.md) for maintainer review. This is not yet
+integrated into the core Grafon API or released under the Grafon HF organization.
